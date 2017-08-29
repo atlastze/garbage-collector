@@ -16,74 +16,73 @@
 #include "state.h"
 #include <iostream>
 
+/* depth-first */
 class MarkVisitor : public GCObjectVisitor {
 public:
-    virtual void visit(Component *component)
+    virtual void visit(Object *object)
     {
-        if (component->marked)
+        if (object->m_marked)
             return;
-        component->marked = 1;
-    }
-
-    virtual void visit(Composite *composite)
-    {
-        if (composite->marked)
-            return;
-        composite->marked = 1;
-        for (auto component : composite->components)
-            component->accept(this);
+        object->m_marked = 1;
+        for (auto obj : object->m_objects)
+            obj->accept(this);
     }
 };
 
+/* depth-first */
 class PrintVisitor : public GCObjectVisitor {
 public:
-    virtual void visit(Component *component)
+    virtual void visit(Object *object)
     {
-        std::cout << component->id;
-    }
-
-    virtual void visit(Composite *composite)
-    {
-        std::cout << composite->id << ": {";
-        for (auto component : composite->components) {
-            std::cout << " ";
-            component->accept(this);
+        /*if (object->m_marked)
+            return;*/
+        object->m_marked = 1;
+        std::cout << object->m_id;
+        for (auto obj : object->m_objects) {
+            if (obj->m_marked)
+                continue;
+            obj->m_marked = 1;
+            std::cout << "--";
+            obj->accept(this);
         }
-        std::cout << " }";
+        //object->m_marked = 0;
+        /*for (auto obj : object->m_objects)
+            obj->m_marked = 0;*/
     }
 };
 
 void State::mark()
 {
     MarkVisitor marker;
-    for (auto object : stack)
+    for (auto object : m_stack)
         object->accept(&marker);
 }
 
 void State::sweep()
 {
     int garbageCount = 0;
-    for (auto i = objects.begin(); i != objects.end();) {
-        if (!(*i)->marked) {
+    for (auto i = m_objectPool.begin(); i != m_objectPool.end();) {
+        if (!(*i)->m_marked) {
             delete *i;
-            objects.erase(i); // don't advance the iterator
+            m_objectPool.erase(i); // don't advance the iterator
             garbageCount++;
         } else {
-            (*i)->marked = 0;
+            (*i)->m_marked = 0;
             ++i;
         }
     }
 
     if (garbageCount > 0) {
         std::cout << "\t" << garbageCount << " object(s) collected\n";
-        if (objects.size() == 0)
+        if (m_objectPool.size() == 0)
             return;
         std::cout << "\tthe remaining object(s):\n";
         PrintVisitor printer;
-        for (auto object : objects) {
+        for (auto object : m_objectPool) {
             std::cout << "\t";
             object->accept(&printer);
             std::cout << "\n";
+            unmarkAll();
         }
     }
 }

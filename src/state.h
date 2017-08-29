@@ -36,7 +36,7 @@ protected:
     void mark();
     void sweep();
 
-    std::vector<GCObject *> stack;
+    std::vector<Object *> m_stack;
 };
 
 #endif /* STATE_H */

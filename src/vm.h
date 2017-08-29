@@ -21,39 +21,30 @@
 
 class VM {
 public:
-    explicit VM(State *state)
-        : state(state)
+    explicit VM(State *m_state)
+        : m_state(m_state)
     {
     }
 
     void run();
 
 private:
-    void push(GCObject *value)
+    Object *top()
     {
-        state->stack.push_back(value);
-    }
-
-    void pop()
-    {
-        if (state->stack.size() > 0)
-            state->stack.pop_back();
-    }
-
-    GCObject *top()
-    {
-        return state->stack.back();
+        return m_state->m_stack.back();
     }
 
     int size()
     {
-        return state->stack.size();
+        return m_state->m_stack.size();
     }
 
-    void populate();
+    void push();
+    void pop();
     void compose();
+    void circle();
 
-    State *state;
+    State *m_state;
 };
 
 #endif /* VM_H */

@@ -16,50 +16,41 @@
 #include "gc.h"
 #include <iostream>
 
-int GCObject::totalCount = 0;
+int GCObject::m_totalCount = 0;
 
 GCObject::GCObject()
-    : marked(0)
+    : m_marked(0)
 {
-    totalCount++;
-    id = totalCount;
-    std::cout << ".. Creating a new object, id: " << id << std::endl;
+    m_totalCount++;
+    m_id = m_totalCount;
+    std::cout << ".. Creating a new object, id: " << m_id << std::endl;
 }
 
 GCObject::~GCObject()
 {
-    std::cout << ".. Deleting object, id: " << id << std::endl;
+    std::cout << ".. Deleting object, id: " << m_id << std::endl;
 }
 
 GarbageCollector::~GarbageCollector()
 {
     // delete all the remaining objects
-    for (auto object : objects)
+    for (auto object : m_objectPool)
         delete object;
 }
 
-Component *GarbageCollector::newComponent()
+Object *GarbageCollector::newObject()
 {
-    if (objects.size() >= thresholdCount)
+    if (m_objectPool.size() == m_thresholdCount)
         gc();
-    Component *component = new Component;
-    objects.push_back(component);
-    return component;
-}
-
-Composite *GarbageCollector::newComposite()
-{
-    if (objects.size() == thresholdCount)
-        gc();
-    Composite *composite = new Composite;
-    objects.push_back(composite);
-    return composite;
+    Object *object = new Object;
+    m_objectPool.push_back(object);
+    return object;
 }
 
 void GarbageCollector::gc()
 {
     mark();
     sweep();
-    if (objects.size() >= thresholdCount)
-        thresholdCount = 2 * thresholdCount;
+    if (m_objectPool.size() >= m_thresholdCount)
+        m_thresholdCount = 2 * m_thresholdCount;
 }

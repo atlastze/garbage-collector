@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-static const int instructionCount = 32;
+static const int instructionCount = 50;
 
 // Simulate executing opcodes, which are generated randomly.
 void VM::run()
@@ -28,44 +28,75 @@ void VM::run()
     for (int i = 0; i < instructionCount; i++) {
         int opcode = rand() % 4;
         switch (opcode) {
-        case 0: // push a new component into the stack
-            populate();
+        case 0: // push a new component into the m_stack
+            push();
             break;
-        case 1:
-            if (size() >= 1) { // pop object, which becomes garbage
-                std::cout << ">> POP\n";
-                pop();
-            } else {
-                populate();
-            }
+        case 1: // pop object, which becomes garbage
+            pop();
+            break;
+        case 2:
+            compose();
+            break;
+        case 3:
+            circle();
             break;
         default:
-            if (size() >= 2) { // compose top two objects
-                compose();
-            } else {
-                populate();
-            }
             break;
         }
     }
     std::cout << ">> HALT\n";
 }
 
-// Push a new component into the stack
-void VM::populate()
+// Push a new component into the m_stack
+void VM::push()
 {
     std::cout << ">> PUSH\n";
-    push(state->newComponent());
+    auto object = m_state->newObject();
+    m_state->m_stack.push_back(object);
+}
+
+void VM::pop()
+{
+    if (m_state->m_stack.size() > 0) {
+        std::cout << ">> POP\n";
+        m_state->m_stack.pop_back();
+    }
 }
 
 // Compose top two objects
 void VM::compose()
 {
-    std::cout << ">> COMPOSE\n";
-    auto composite = state->newComposite();
-    composite->add(top());
-    pop();
-    composite->add(top());
-    pop();
-    push(composite);
+    int size = m_state->m_stack.size();
+    if (size < 2)
+        return;
+
+    auto object1 = m_state->m_stack[size - 1];
+    auto object2 = m_state->m_stack[size - 2];
+    if (!object2->contains(object1)) {
+        std::cout << ">> COMPOSE\n";
+        object2->add(object1);
+    }
+}
+
+// Circular references of top two objects
+void VM::circle()
+{
+    int size = m_state->m_stack.size();
+    if (size > 1) {
+        auto object1 = m_state->m_stack[size - 1];
+        auto object2 = m_state->m_stack[size - 2];
+        if (!object2->contains(object1)) {
+            object2->add(object1);
+        }
+        if (!object1->contains(object2)) {
+            std::cout << ">> CIRCLE TOP TWO\n";
+            object1->add(object2);
+        }
+    } else if (size > 0) {
+        auto object = m_state->m_stack[size - 1];
+        if (!object->contains(object)) {
+            std::cout << ">> CIRCLE ITSELF\n";
+            object->add(object);
+        }
+    }
 }

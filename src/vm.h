@@ -39,6 +39,7 @@ private:
         return m_state->m_stack.size();
     }
 
+    // operations
     void push();
     void pop();
     void compose();

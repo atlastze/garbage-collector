@@ -19,12 +19,12 @@
 #include <stdlib.h>
 #include <time.h>
 
-static const int instructionCount = 50;
+static const int instructionCount = 64;
 
 // Simulate executing opcodes, which are generated randomly.
 void VM::run()
 {
-    srand(time(NULL));
+    //srand(time(NULL));
     for (int i = 0; i < instructionCount; i++) {
         int opcode = rand() % 4;
         switch (opcode) {
@@ -37,10 +37,8 @@ void VM::run()
         case 2:
             compose();
             break;
-        case 3:
-            circle();
-            break;
         default:
+            circle();
             break;
         }
     }

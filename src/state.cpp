@@ -24,8 +24,20 @@ public:
         if (object->m_marked)
             return;
         object->m_marked = 1;
-        for (auto obj : object->m_objects)
-            obj->accept(this);
+        for (auto child : object->m_objects)
+            child->accept(this);
+    }
+};
+
+class UnmarkVisitor : public GCObjectVisitor {
+public:
+    virtual void visit(Object *object)
+    {
+        if (!object->m_marked)
+            return;
+        object->m_marked = 0;
+        for (auto child : object->m_objects)
+            child->accept(this);
     }
 };
 
@@ -34,20 +46,17 @@ class PrintVisitor : public GCObjectVisitor {
 public:
     virtual void visit(Object *object)
     {
-        /*if (object->m_marked)
-            return;*/
+        //if (object->m_marked)
+            //return;
         object->m_marked = 1;
         std::cout << object->m_id;
-        for (auto obj : object->m_objects) {
-            if (obj->m_marked)
+        for (auto child : object->m_objects) {
+            if (child->m_marked)
                 continue;
-            obj->m_marked = 1;
+            child->m_marked = 1;
             std::cout << "--";
-            obj->accept(this);
+            child->accept(this);
         }
-        //object->m_marked = 0;
-        /*for (auto obj : object->m_objects)
-            obj->m_marked = 0;*/
     }
 };
 
@@ -78,11 +87,12 @@ void State::sweep()
             return;
         std::cout << "\tthe remaining object(s):\n";
         PrintVisitor printer;
+        UnmarkVisitor unmarker;
         for (auto object : m_objectPool) {
             std::cout << "\t";
             object->accept(&printer);
+            object->accept(&unmarker);
             std::cout << "\n";
-            unmarkAll();
         }
     }
 }

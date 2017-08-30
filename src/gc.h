@@ -89,6 +89,7 @@ protected:
 // complex GC object, consist of objects
 class Object : public GCObject {
     friend class MarkVisitor;
+    friend class UnmarkVisitor;
     friend class PrintVisitor;
 
 public:
